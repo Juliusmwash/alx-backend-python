@@ -12,7 +12,7 @@ async def wait_n(n: int, max_delay: int) -> List[float]:
     """
     Asynchronous coroutine that spawns wait_random n times with
     the specified max_delay and returns a list of delays in
-    ascending order.
+    ascending order using asyncio.as_completed.
 
     Args:
         n (int): The number of times to run wait_random.
@@ -22,6 +22,14 @@ async def wait_n(n: int, max_delay: int) -> List[float]:
     Returns:
         List[float]: List of delays in ascending order.
     """
-    results = await asyncio.gather(*(wait_random(max_delay) for _ in range(n)))
-    results.sort()
-    return results
+    delays: List[float] = []
+
+    for i in range(n):
+        delays.append(wait_random(max_delay))
+
+    all_delays: List[float] = []
+    for completed_delay in asyncio.as_completed(delays):
+        earliest_result = await completed_delay
+        all_delays.append(earliest_result)
+
+    return all_delays
